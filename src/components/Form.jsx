@@ -7,6 +7,7 @@ import {
 } from "@material-tailwind/react";
 import { List, ListItem } from "@material-tailwind/react";
 import { useState } from "react";
+import { Select, Option } from "@material-tailwind/react";
 
 import "./Form.css";
 
@@ -16,6 +17,7 @@ export function SimpleRegistrationForm() {
     tenure: "",
     rateOfInterest: "",
     partPaymentAmount: 0,
+    partPaymentMode: "Monthly",
   });
 
   const [paymentDetails, setPaymentDetails] = useState({
@@ -24,8 +26,7 @@ export function SimpleRegistrationForm() {
     fullInterest: "",
     actualPayment: "",
     actualInterest: "",
-    partPaymentAmount: ""
-
+    partPaymentAmount: "",
   });
 
   const [schedule, setSchedule] = useState();
@@ -34,7 +35,12 @@ export function SimpleRegistrationForm() {
   const [isFormValid, setIsFormValid] = useState(false);
 
   const handleChange = (e, key) => {
-    let value = parseFloat(e.target.value);
+    let value;
+    if (key === "partPaymentMode") {
+      value = e;
+    } else {
+      value = parseFloat(e.target.value);
+    }
     console.log({ Value: value });
     let temp = {
       ...formData,
@@ -53,13 +59,22 @@ export function SimpleRegistrationForm() {
 
   const onFormSubmit = () => {
     const temp = formData;
+    console.log({ FormData: formData });
     const emi = calculateEMI(temp.loanAmount, temp.rateOfInterest, temp.tenure);
     const totalPayment = emi * temp.tenure * 12;
     const totalInterest = totalPayment - temp.loanAmount;
-  
+
     let partPayments = [];
     for (let i = 0; i < temp.tenure * 12; i++) {
+      if(temp.partPaymentMode === 'Yearly') {
+        if(i%12===0) {
+        partPayments.push(temp.partPaymentAmount);
+        } else {
+          partPayments.push(0);
+        }
+      } else {
       partPayments.push(temp.partPaymentAmount);
+      }
     }
     setPartPaymentDetails(partPayments);
     const schedule = generateAmortizationSchedule(
@@ -73,10 +88,10 @@ export function SimpleRegistrationForm() {
     let actualInterest = 0;
     let actualPayment = 0;
     let partPaymentAmount = 0;
-    for(let i=0;i<schedule.length;i++) {
-      actualInterest = actualInterest+schedule[i].interestPaid;
-      actualPayment+=schedule[i].emi+schedule[i].partPayment;
-      partPaymentAmount+=schedule[i].partPayment;
+    for (let i = 0; i < schedule.length; i++) {
+      actualInterest = actualInterest + schedule[i].interestPaid;
+      actualPayment += schedule[i].emi + schedule[i].partPayment;
+      partPaymentAmount += schedule[i].partPayment;
     }
     setPaymentDetails({
       monthlyEmi: emi,
@@ -84,7 +99,7 @@ export function SimpleRegistrationForm() {
       totalInterest: totalInterest,
       actualInterest: actualInterest,
       actualPayment: actualPayment,
-      partPaymentAmount: partPaymentAmount
+      partPaymentAmount: partPaymentAmount,
     });
     console.log({ Schedule: schedule });
   };
@@ -103,17 +118,24 @@ export function SimpleRegistrationForm() {
     let actualInterest = 0;
     let actualPayment = 0;
     let partPaymentAmount = 0;
-    for(let i=0;i<schedule.length;i++) {
-      actualInterest = actualInterest+schedule[i].interestPaid;
-      actualPayment+=schedule[i].emi+schedule[i].partPayment;
-      partPaymentAmount+=schedule[i].partPayment;
+    for (let i = 0; i < schedule.length; i++) {
+      actualInterest = actualInterest + schedule[i].interestPaid;
+      actualPayment += schedule[i].emi + schedule[i].partPayment;
+      partPaymentAmount += schedule[i].partPayment;
     }
     setPaymentDetails({
       ...paymentDetails,
       actualInterest: actualInterest,
       actualPayment: actualPayment,
-      partPaymentAmount: partPaymentAmount
+      partPaymentAmount: partPaymentAmount,
     });
+  };
+
+  const getMonths = (years) => {
+    const year = years / 12;
+    const months = years % 12;
+
+    return `${year.toString().split(".")[0]} year(s) and ${months} month(s)`;
   };
 
   function generateAmortizationSchedule(
@@ -187,23 +209,24 @@ export function SimpleRegistrationForm() {
 
   function formatIndianRupee(amount) {
     // Convert to string and handle decimal parts
-    let [integerPart, decimalPart] = String(amount).split('.');
-    
+    let [integerPart, decimalPart] = String(amount).split(".");
+
     // Format the integer part with Indian comma conventions
     let lastThree = integerPart.slice(-3);
     let otherNumbers = integerPart.slice(0, -3);
-    
-    if (otherNumbers !== '') {
-      lastThree = ',' + lastThree;
+
+    if (otherNumbers !== "") {
+      lastThree = "," + lastThree;
     }
-    
-    let formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
-    
+
+    let formatted =
+      otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+
     // Add decimal part if exists
     if (decimalPart) {
-      formatted += '.' + decimalPart;
+      formatted += "." + decimalPart;
     }
-    
+
     return formatted;
   }
 
@@ -325,7 +348,36 @@ export function SimpleRegistrationForm() {
                   clipRule="evenodd"
                 />
               </svg>
-              Enter the monthly part payment
+              Minimum amount is 0
+            </Typography>
+          </div>
+          <div className="w-96 pt-5">
+            <Select
+              color="blue"
+              label="Select Part Payment Mode"
+              onChange={(e) => handleChange(e, "partPaymentMode")}
+            >
+              <Option value="Monthly">Monthly</Option>
+              <Option value="Yearly">Yearly</Option>
+            </Select>
+            <Typography
+              variant="small"
+              color="gray"
+              className="mt-2 flex items-center gap-1 font-normal"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="-mt-px h-4 w-4"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm8.706-1.442c1.146-.573 2.437.463 2.126 1.706l-.709 2.836.042-.02a.75.75 0 01.67 1.34l-.04.022c-1.147.573-2.438-.463-2.127-1.706l.71-2.836-.042.02a.75.75 0 11-.671-1.34l.041-.022zM12 9a.75.75 0 100-1.5.75.75 0 000 1.5z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Monthly will be considered if no option chosen
             </Typography>
           </div>
           <div className="pt-5">
@@ -343,24 +395,52 @@ export function SimpleRegistrationForm() {
         <div className="payment-details">
           <Card className="w-96">
             <List>
-              <ListItem>Monthly EMI : {formatIndianRupee(paymentDetails.monthlyEmi)}</ListItem>
-              <ListItem>Toal Amount Paid (No Part Payment) : {formatIndianRupee(paymentDetails.totalPayment)}</ListItem>
               <ListItem>
-                Total Interest Paid (No Part Payment): {formatIndianRupee(paymentDetails.totalInterest)}
+                <b>
+                  Monthly EMI : {formatIndianRupee(paymentDetails.monthlyEmi)}
+                </b>
               </ListItem>
-              {paymentDetails.partPaymentAmount>0 && <div>
-                <ListItem>
-                Actual Amount Paid : {formatIndianRupee(paymentDetails.actualPayment)}
+              <ListItem>
+                <b>
+                  Toal Amount Paid (No Part Payment) :{" "}
+                  {formatIndianRupee(paymentDetails.totalPayment)}
+                </b>
               </ListItem>
+              <ListItem>
+                <b>
+                  Total Interest Paid (No Part Payment):{" "}
+                  {formatIndianRupee(paymentDetails.totalInterest)}
+                </b>
+              </ListItem>
+              {paymentDetails.partPaymentAmount > 0 && (
+                <div>
+                  <ListItem>
+                    <b>
+                      Actual Amount Paid :{" "}
+                      {formatIndianRupee(paymentDetails.actualPayment)}
+                    </b>
+                  </ListItem>
 
-              <ListItem>
-                Actual Interest Paid : {formatIndianRupee(paymentDetails.actualInterest)}
-              </ListItem>
-              <ListItem>
-                You saved {formatIndianRupee(paymentDetails.totalInterest - paymentDetails.actualInterest)} by paying {formatIndianRupee(paymentDetails.partPaymentAmount)}
-              </ListItem>
-                </div>}
-              
+                  <ListItem>
+                    <b>
+                      Actual Interest Paid :{" "}
+                      {formatIndianRupee(paymentDetails.actualInterest)}
+                    </b>
+                  </ListItem>
+                  <ListItem>
+                    <b>
+                      You saved{" "}
+                      {formatIndianRupee(
+                        paymentDetails.totalInterest -
+                          paymentDetails.actualInterest
+                      )}{" "}
+                      by paying{" "}
+                      {formatIndianRupee(paymentDetails.partPaymentAmount)}
+                      and Cleared your loan in {getMonths(schedule.length)}
+                    </b>
+                  </ListItem>
+                </div>
+              )}
             </List>
           </Card>
         </div>
