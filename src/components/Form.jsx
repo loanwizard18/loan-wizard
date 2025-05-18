@@ -20,8 +20,12 @@ export function SimpleRegistrationForm() {
 
   const [paymentDetails, setPaymentDetails] = useState({
     monthlyEmi: "",
-    totalPayment: "",
-    totalInterest: "",
+    fullPayment: "",
+    fullInterest: "",
+    actualPayment: "",
+    actualInterest: "",
+    partPaymentAmount: ""
+
   });
 
   const [schedule, setSchedule] = useState();
@@ -52,11 +56,7 @@ export function SimpleRegistrationForm() {
     const emi = calculateEMI(temp.loanAmount, temp.rateOfInterest, temp.tenure);
     const totalPayment = emi * temp.tenure * 12;
     const totalInterest = totalPayment - temp.loanAmount;
-    setPaymentDetails({
-      monthlyEmi: emi,
-      totalPayment: totalPayment,
-      totalInterest: totalInterest,
-    });
+  
     let partPayments = [];
     for (let i = 0; i < temp.tenure * 12; i++) {
       partPayments.push(temp.partPaymentAmount);
@@ -69,6 +69,23 @@ export function SimpleRegistrationForm() {
       partPayments
     );
     setSchedule(schedule);
+
+    let actualInterest = 0;
+    let actualPayment = 0;
+    let partPaymentAmount = 0;
+    for(let i=0;i<schedule.length;i++) {
+      actualInterest = actualInterest+schedule[i].interestPaid;
+      actualPayment+=schedule[i].emi+schedule[i].partPayment;
+      partPaymentAmount+=schedule[i].partPayment;
+    }
+    setPaymentDetails({
+      monthlyEmi: emi,
+      totalPayment: totalPayment,
+      totalInterest: totalInterest,
+      actualInterest: actualInterest,
+      actualPayment: actualPayment,
+      partPaymentAmount: partPaymentAmount
+    });
     console.log({ Schedule: schedule });
   };
 
@@ -83,6 +100,20 @@ export function SimpleRegistrationForm() {
       temp
     );
     setSchedule(schedule);
+    let actualInterest = 0;
+    let actualPayment = 0;
+    let partPaymentAmount = 0;
+    for(let i=0;i<schedule.length;i++) {
+      actualInterest = actualInterest+schedule[i].interestPaid;
+      actualPayment+=schedule[i].emi+schedule[i].partPayment;
+      partPaymentAmount+=schedule[i].partPayment;
+    }
+    setPaymentDetails({
+      ...paymentDetails,
+      actualInterest: actualInterest,
+      actualPayment: actualPayment,
+      partPaymentAmount: partPaymentAmount
+    });
   };
 
   function generateAmortizationSchedule(
@@ -153,6 +184,28 @@ export function SimpleRegistrationForm() {
     "Part Payment",
     "Remaining Amount",
   ];
+
+  function formatIndianRupee(amount) {
+    // Convert to string and handle decimal parts
+    let [integerPart, decimalPart] = String(amount).split('.');
+    
+    // Format the integer part with Indian comma conventions
+    let lastThree = integerPart.slice(-3);
+    let otherNumbers = integerPart.slice(0, -3);
+    
+    if (otherNumbers !== '') {
+      lastThree = ',' + lastThree;
+    }
+    
+    let formatted = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+    
+    // Add decimal part if exists
+    if (decimalPart) {
+      formatted += '.' + decimalPart;
+    }
+    
+    return formatted;
+  }
 
   return (
     <div>
@@ -290,11 +343,24 @@ export function SimpleRegistrationForm() {
         <div className="payment-details">
           <Card className="w-96">
             <List>
-              <ListItem>Monthly EMI : {paymentDetails.monthlyEmi}</ListItem>
-              <ListItem>Total Payment : {paymentDetails.totalPayment}</ListItem>
+              <ListItem>Monthly EMI : {formatIndianRupee(paymentDetails.monthlyEmi)}</ListItem>
+              <ListItem>Toal Amount Paid (No Part Payment) : {formatIndianRupee(paymentDetails.totalPayment)}</ListItem>
               <ListItem>
-                Total Interes Paid: {paymentDetails.totalInterest}
+                Total Interest Paid (No Part Payment): {formatIndianRupee(paymentDetails.totalInterest)}
               </ListItem>
+              {paymentDetails.partPaymentAmount>0 && <div>
+                <ListItem>
+                Actual Amount Paid : {formatIndianRupee(paymentDetails.actualPayment)}
+              </ListItem>
+
+              <ListItem>
+                Actual Interest Paid : {formatIndianRupee(paymentDetails.actualInterest)}
+              </ListItem>
+              <ListItem>
+                You saved {formatIndianRupee(paymentDetails.totalInterest - paymentDetails.actualInterest)} by paying {formatIndianRupee(paymentDetails.partPaymentAmount)}
+              </ListItem>
+                </div>}
+              
             </List>
           </Card>
         </div>
