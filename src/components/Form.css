@@ -1,0 +1,13 @@
+.loan-app {
+    display: flex;
+    margin-top: 5%;
+    margin-left: 30%;
+}
+
+.payment-details {
+    padding-left: 10px;
+}
+
+.part-payments {
+    padding: 20px;
+}
