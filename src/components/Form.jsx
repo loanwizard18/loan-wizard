@@ -13,9 +13,9 @@ import "./Form.css";
 
 export function SimpleRegistrationForm() {
   const [formData, setFormData] = useState({
-    loanAmount: "",
-    tenure: "",
-    rateOfInterest: "",
+    loanAmount: 5000000,
+    tenure: 30,
+    rateOfInterest: 8.7,
     partPaymentAmount: 0,
     partPaymentMode: "Monthly",
   });
@@ -67,7 +67,7 @@ export function SimpleRegistrationForm() {
     let partPayments = [];
     for (let i = 0; i < temp.tenure * 12; i++) {
       if(temp.partPaymentMode === 'Yearly') {
-        if(i%12===0) {
+        if((i+1)%12===0 && i!=0) {
         partPayments.push(temp.partPaymentAmount);
         } else {
           partPayments.push(0);
@@ -240,6 +240,7 @@ export function SimpleRegistrationForm() {
               inputMode="numeric"
               label="Enter Loan amount"
               className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              value={formData.loanAmount}
               onChange={(e) => handleChange(e, "loanAmount")}
             />
             <Typography
@@ -269,6 +270,7 @@ export function SimpleRegistrationForm() {
               inputMode="numeric"
               label="Enter the tenure in Years"
               className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              value={formData.tenure}
               onChange={(e) => handleChange(e, "tenure")}
               max={30}
             />
@@ -299,6 +301,7 @@ export function SimpleRegistrationForm() {
               inputMode="numeric"
               label="Enter the rate of interes"
               className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              value={formData.rateOfInterest}
               min={0}
               onChange={(e) => handleChange(e, "rateOfInterest")}
             />
